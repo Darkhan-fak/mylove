@@ -40,9 +40,27 @@ a { color: inherit; }
 }
 .side--left { left: 0; }
 .side--right { right: 0; transform: scaleX(-1); }
-.side.custom { transform: none; opacity: 1; background-size: cover; }
-.side--left.custom { background-position: left top; -webkit-mask-image: linear-gradient(to right, #000 75%, transparent); mask-image: linear-gradient(to right, #000 75%, transparent); }
-.side--right.custom { background-position: right top; -webkit-mask-image: linear-gradient(to left, #000 75%, transparent); mask-image: linear-gradient(to left, #000 75%, transparent); }
+.side.custom { transform: none; background: none; opacity: 1; overflow: hidden;
+  -webkit-mask-image: linear-gradient(var(--fade), #000 85%, transparent); mask-image: linear-gradient(var(--fade), #000 85%, transparent); }
+.side--left { --fade: to right; }
+.side--right { --fade: to left; }
+
+.sticker {
+  position: absolute;
+  width: min(110%, 33vh);
+  transform: rotate(var(--r));
+  transform-origin: 50% 85%;
+  filter: drop-shadow(0 8px 12px rgba(90, 70, 60, .18));
+  animation: sticker-sway 6s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.side--left .sticker { left: var(--x); }
+.side--right .sticker { right: var(--x); }
+@keyframes sticker-sway {
+  from { transform: rotate(calc(var(--r) - 3deg)) translateY(0); }
+  to { transform: rotate(calc(var(--r) + 3deg)) translateY(-6px); }
+}
+@media (prefers-reduced-motion: reduce) { .sticker { animation: none; } }
 @media (max-width: 900px) { .side { display: none; } }
 
 /* ---------- Каркас ---------- */
