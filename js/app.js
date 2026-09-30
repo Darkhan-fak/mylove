@@ -86,7 +86,7 @@
 
     app.innerHTML = `
       <section class="welcome">
-        <img class="welcome__flower" src="${BLOOM}" alt="">
+        <img class="welcome__sticker" src="assets/flowers/hello.webp" alt="">
         <span class="eyebrow">только для нас двоих</span>
         <h1>${esc(C.greeting)}</h1>
         <p class="muted">${esc(C.subtitle)}</p>

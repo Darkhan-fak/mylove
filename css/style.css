@@ -1,13 +1,13 @@
 /* ---------- Цвета и размеры (меняй здесь) ---------- */
 :root {
-  --bg: #fbf7f3;
+  --bg: #f6f0e7;
   --surface: #ffffff;
-  --ink: #4a3438;
-  --ink-soft: #8a7478;
-  --line: #efe4e0;
+  --ink: #4d3a32;
+  --ink-soft: #8c7a6e;
+  --line: #eadfd2;
   --rose: #e9b7bb;
-  --rose-deep: #c9787f;
-  --sage: #a9b894;
+  --rose-deep: #b8737a;
+  --sage: #9fae8c;
   --sage-soft: #eef2e8;
   --cream: #f6e3c8;
   --radius: 18px;
@@ -92,7 +92,8 @@ h2 { font-size: 36px; }
   text-align: center; gap: 20px;
 }
 .welcome__flower { width: 72px; animation: sway 6s ease-in-out infinite; }
-@keyframes sway { 50% { transform: rotate(8deg) scale(1.04); } }
+.welcome__sticker { width: 170px; transform: rotate(-4deg); filter: drop-shadow(0 8px 14px rgba(90, 70, 60, .16)); animation: sway 7s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(2deg) scale(1.02); } }
 .welcome p { max-width: 440px; margin: 0; }
 .counter {
   margin-top: 8px; padding: 14px 26px; border-radius: 999px;
