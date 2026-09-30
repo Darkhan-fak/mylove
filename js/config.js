@@ -12,5 +12,6 @@ window.CONFIG = {
 
   // Картинки для боковых панелей: положи файлы в assets/flowers/ и впиши пути.
   // Пустая строка означает нарисованную веточку по умолчанию.
+  // Запасной вариант с гирляндами из отдельных цветов: garland-left.webp / garland-right.webp
   sides: { left: 'assets/flowers/left.webp', right: 'assets/flowers/right.webp' },
 };
