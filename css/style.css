@@ -139,7 +139,9 @@ body.is-welcome .garden { opacity: 1; }
 .garden__note {
   position: absolute; right: calc(var(--side-w) + 22px); bottom: 14px;
   font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
-  color: var(--ink-soft); opacity: .85;
+  color: var(--ink-soft);
+  padding: 5px 12px; border-radius: 999px;
+  background: rgba(246, 240, 231, .78); backdrop-filter: blur(2px);
 }
 @media (max-width: 560px) { .garden__note { right: 14px; bottom: 10px; font-size: 10px; } }
 
