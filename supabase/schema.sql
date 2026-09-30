@@ -100,12 +100,26 @@ create policy photos_delete on storage.objects for delete
 
 -- ---------- Последний шаг ----------
 -- Выполнить ПОСЛЕ того, как обе учётные записи заведены в Authentication → Users.
--- Почта берётся из блока login в js/config.js. Запустить целиком:
+-- Почта берётся из блока login в js/config.js. Запустить целиком.
 
+-- Обе учётки названы поимённо: случайная третья запись доступа не получит.
 insert into public.members (user_id, who)
-select id, case when email = 'darkhan@mylove.site' then 'he' else 'she' end
+select id,
+       case email
+         when 'darkhan@mylove.site' then 'he'
+         when 'aida@mylove.site'    then 'she'
+       end
 from auth.users
+where email in ('darkhan@mylove.site', 'aida@mylove.site')
 on conflict (user_id) do update set who = excluded.who;
 
--- Проверить, что получилось — должно быть две строки, he и she:
+-- Убрать из списка своих всех, кроме этих двоих (например, учётки от прошлых проб).
+delete from public.members
+where user_id not in (
+  select id from auth.users where email in ('darkhan@mylove.site', 'aida@mylove.site')
+);
+
+-- Проверить — должно быть ровно две строки, he и she:
 select m.who, u.email from public.members m join auth.users u on u.id = m.user_id;
+
+-- Лишние учётные записи целиком удаляются в Authentication → Users.
