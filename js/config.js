@@ -13,12 +13,12 @@ window.CONFIG = {
   // Подпись под приветствием (пустая строка убирает её)
   gardenNote: 'Butchart Gardens · Vancouver Island',
 
-  // Общее хранилище (Supabase). Пока пусто — записи хранятся только в браузере,
-  // и каждый видит лишь свои. Значения берутся в Supabase: Settings → API.
-  // Ключ anon публичный, его не прячут: доступ закрывают правила из supabase/schema.sql.
+  // Общее хранилище (Supabase). Если очистить оба поля, записи снова будут
+  // храниться только в браузере. Значения берутся в Supabase: Settings → API.
+  // Ключ публичный, его не прячут: доступ закрывают правила из supabase/schema.sql.
   supabase: {
-    url: '',
-    anonKey: '',
+    url: 'https://wvpeppuimdjvxxmfovoh.supabase.co',
+    anonKey: 'sb_publishable_SCIFia0s3iUFZImywbPAoQ_XgVwIqFf',
   },
 
   // Наклейки по бокам (файлы из assets/stickers/), сверху вниз.

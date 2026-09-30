@@ -1,7 +1,10 @@
 const { chromium } = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright');
-const URL = 'file:///home/user/mylove/index.html';
+const { start, withoutCloud } = require('./serve');
 
 (async () => {
+  // Сайт поднимаем локально и без Supabase: проверяем сами экраны, а не сеть.
+  const site = await start(withoutCloud);
+  const URL = site.url + 'index.html';
   const browser = await chromium.launch();
   const problems = [];
   const log = (m) => { problems.push(m); console.log('  ⚠ ' + m); };
@@ -151,4 +154,6 @@ const URL = 'file:///home/user/mylove/index.html';
 
   console.log('\n===== ИТОГ: ' + (problems.length ? problems.length + ' замечаний' : 'замечаний нет') + ' =====');
   await browser.close();
+  site.stop();
+  process.exitCode = problems.length ? 1 : 0;
 })();

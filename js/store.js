@@ -105,7 +105,7 @@ window.Store = (() => {
     return {
       cloud: true,
       async init() {
-        await load('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js');
+        await load('js/vendor/supabase.js');   // библиотека лежит рядом, без обращения к чужому CDN
         sb = window.supabase.createClient(CFG.url, CFG.anonKey);
         const { data } = await sb.auth.getSession();
         userId = data.session?.user?.id || null;
