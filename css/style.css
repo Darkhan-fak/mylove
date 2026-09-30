@@ -41,14 +41,12 @@ a { color: inherit; }
 }
 .side--left { left: 0; }
 .side--right { right: 0; transform: scaleX(-1); }
-.side.custom { transform: none; background: none; opacity: 1; overflow: hidden;
-  -webkit-mask-image: linear-gradient(var(--fade), #000 85%, transparent); mask-image: linear-gradient(var(--fade), #000 85%, transparent); }
-.side--left { --fade: to right; }
-.side--right { --fade: to left; }
+/* Наклейкам разрешено выступать к центру, поэтому ни обрезки, ни маски здесь нет */
+.side.custom { transform: none; background: none; opacity: 1; }
 
 .sticker {
   position: absolute;
-  width: min(110%, 33vh);
+  width: min(128%, 38vh);
   transform: rotate(var(--r));
   transform-origin: 50% 85%;
   filter: drop-shadow(0 8px 12px rgba(90, 70, 60, .18));
@@ -57,6 +55,18 @@ a { color: inherit; }
 }
 .side--left .sticker { left: var(--x); }
 .side--right .sticker { right: var(--x); }
+
+/* На экранах со списками наклейки скромнее и прижаты к краю, чтобы не лезть под карточки */
+body:not(.is-welcome) .sticker { width: min(104%, 30vh); }
+body:not(.is-welcome) .side--left .sticker { left: -8%; }
+body:not(.is-welcome) .side--right .sticker { right: -8%; }
+
+/* Узкие экраны: места по бокам мало, выступ к центру почти убираем */
+@media (max-width: 1340px) {
+  .sticker { width: min(104%, 28vh); }
+  .side--left .sticker { left: calc(var(--x) * .3 - 6%); }
+  .side--right .sticker { right: calc(var(--x) * .3 - 6%); }
+}
 @keyframes sticker-sway {
   from { transform: rotate(calc(var(--r) - 3deg)) translateY(0); }
   to { transform: rotate(calc(var(--r) + 3deg)) translateY(-6px); }
@@ -274,3 +284,13 @@ body.is-welcome .garden { opacity: 1; }
 .photo-pick input { display: none; }
 .form__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 4px; }
 .day-list { display: grid; gap: 8px; margin-bottom: 20px; }
+
+/* ---------- Невысокие экраны: клумба ниже, чтобы кнопки не тонули в цветах ---------- */
+@media (max-height: 820px) {
+  .garden { height: clamp(100px, 15vh, 140px); }
+  .welcome {
+    padding-bottom: calc(clamp(100px, 15vh, 140px) + 12px);
+    gap: 14px;
+  }
+  .welcome__sticker { width: 130px; }
+}

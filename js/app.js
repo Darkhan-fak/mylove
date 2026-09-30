@@ -390,10 +390,11 @@
     el.classList.add('custom');
     el.innerHTML = names.map((n, i) => {
       const odd = (i + s) % 2;
-      const top = -4 + i * (100 / names.length);      // % высоты экрана
+      // Все наклейки умещаются выше клумбы: последняя начинается не ниже 45% высоты экрана.
+      const top = -5 + i * (50 / Math.max(names.length - 1, 1));
       const dur = 5 + ((i * 3 + s * 2) % 4) * 0.8;    // 5–7.4 с
       return `<img class="sticker" src="assets/stickers/${n}.webp" alt="" style="top:${top}%;` +
-        `--x:${odd ? 2 : -12}%;--r:${odd ? 4 : -4}deg;` +
+        `--x:${odd ? 14 : -10}%;--r:${odd ? 4 : -4}deg;` +
         `animation-duration:${dur}s;animation-delay:-${(i * 1.9 + s * 1.1).toFixed(1)}s">`;
     }).join('');
   });
