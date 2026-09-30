@@ -276,6 +276,7 @@
 
   // ---------- Экран 5: календарь ----------
   let calMonth = (() => { const d = today(); d.setDate(1); return d; })();
+  let datesTab = 'upcoming';
 
   async function viewCalendar() {
     const dates = await S.list('dates');
@@ -293,8 +294,10 @@
       if (i >= 34 && d.getMonth() !== first.getMonth()) break;
     }
     const todayKey = ymd(today());
-    const upcoming = dates.filter((d) => d.day >= todayKey).sort((a, b) => (a.day + (a.time || '')).localeCompare(b.day + (b.time || '')));
-    const pastCount = dates.length - upcoming.length;
+    const byTime = (a, b) => (a.day + (a.time || '')).localeCompare(b.day + (b.time || ''));
+    const upcoming = dates.filter((d) => d.day >= todayKey).sort(byTime);
+    const past = dates.filter((d) => d.day < todayKey).sort(byTime).reverse();  // недавние сверху
+    const shown = datesTab === 'past' ? past : upcoming;
 
     app.innerHTML = `
       ${topbar()}
@@ -316,8 +319,17 @@
           }).join('')}
         </div>
       </div>
-      <p class="eyebrow section-label">ближайшие свидания${pastCount ? ` · уже было ${pastCount}` : ''}</p>
-      ${upcoming.length ? `<div class="dates">${upcoming.slice(0, 8).map(dateCard).join('')}</div>` : empty('Ближайших свиданий пока нет. Самое время позвать.')}`;
+      <div class="chips section-label">
+        <button class="chip ${datesTab === 'past' ? '' : 'is-active'}" data-tab="upcoming">Ближайшие${upcoming.length ? ` · ${upcoming.length}` : ''}</button>
+        <button class="chip ${datesTab === 'past' ? 'is-active' : ''}" data-tab="past">Уже было${past.length ? ` · ${past.length}` : ''}</button>
+      </div>
+      ${shown.length ? `<div class="dates">${shown.slice(0, 12).map(dateCard).join('')}</div>`
+        : empty(datesTab === 'past' ? 'Прошедших свиданий пока нет.' : 'Ближайших свиданий пока нет. Самое время позвать.')}`;
+
+    app.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
+      datesTab = b.dataset.tab;
+      viewCalendar();
+    }));
 
     app.querySelectorAll('[data-nav]').forEach((b) => b.addEventListener('click', () => {
       calMonth.setMonth(calMonth.getMonth() + Number(b.dataset.nav));
@@ -334,12 +346,14 @@
 
   function dateCard(d) {
     const dt = parseYmd(d.day);
+    // год подписываем, только если свидание не этого года — иначе «13 авг.» было бы двусмысленным
+    const year = dt.getFullYear() === today().getFullYear() ? '' : String(dt.getFullYear());
     return `
       <article class="card date">
         <div class="date__day"><b>${dt.getDate()}</b><span>${dt.toLocaleDateString('ru-RU', { month: 'short' })}</span></div>
         <div class="date__main">
           <div class="date__title">${esc(d.title)}</div>
-          <div class="date__info">${[d.time, d.place].filter(Boolean).map(esc).join(' · ')}${d.note ? `<br>${esc(d.note)}` : ''}</div>
+          <div class="date__info">${[year, d.time, d.place].filter(Boolean).map(esc).join(' · ')}${d.note ? `<br>${esc(d.note)}` : ''}</div>
         </div>
         <button class="icon-btn" data-del-date="${d.id}" title="Удалить">✕</button>
       </article>`;
