@@ -305,3 +305,7 @@ body:not(.is-welcome) .garden__note { display: none; }
   }
   .welcome__sticker { width: 130px; }
 }
+
+/* ---------- Вход по ссылке на почту ---------- */
+.login { width: min(320px, 100%); margin-top: 8px; }
+.login .btn { justify-self: center; }

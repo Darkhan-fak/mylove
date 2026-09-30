@@ -20,24 +20,14 @@
   };
   const nameOf = (who) => C.names[who] || '';
   const authorTag = (who) => `<span class="author author--${who}">${esc(nameOf(who))}</span>`;
-  const topbar = () => `<div class="topbar"><a class="back" href="#/menu">← меню</a><span class="eyebrow">${esc(nameOf(S.getUser()))}</span></div>`;
-  const empty = (text) => `<div class="empty"><img src="${BLOOM}" alt="">${text}</div>`;
-
-  // Сжатие фото перед сохранением: длинная сторона до 1280px, JPEG
-  const compress = (file, max = 1280) => new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height));
-      const cv = document.createElement('canvas');
-      cv.width = Math.round(img.width * k);
-      cv.height = Math.round(img.height * k);
-      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      URL.revokeObjectURL(img.src);
-      resolve(cv.toDataURL('image/jpeg', 0.8));
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
+  const topbar = () => `<div class="topbar"><a class="back" href="#/menu">← меню</a><span class="eyebrow">${esc(nameOf(S.me()))}</span></div>`;
+  // В облаке фотографии лежат в закрытом хранилище и отдаются по временной ссылке,
+  // поэтому адрес подставляем уже после отрисовки карточек.
+  const showPhotos = (root) => root.querySelectorAll('[data-photo]').forEach(async (img) => {
+    img.src = await S.photoUrl(img.dataset.photo);
   });
+
+  const empty = (text) => `<div class="empty"><img src="${BLOOM}" alt="">${text}</div>`;
 
   // ---------- Модальное окно ----------
   const modal = document.getElementById('modal');
@@ -52,24 +42,23 @@
   modal.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) closeModal(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
-  // Поле выбора фото с превью; возвращает функцию, которая отдаёт dataURL или ''
+  // Поле выбора фото: превью показываем сразу, а сохраняем только при отправке формы —
+  // иначе отменённое желание оставляло бы за собой лишний файл.
   const photoField = (root) => {
     const pick = root.querySelector('.photo-pick');
     const input = pick.querySelector('input');
-    let data = '';
-    input.addEventListener('change', async () => {
+    input.addEventListener('change', () => {
       const f = input.files[0];
       if (!f) return;
-      data = await compress(f);
-      pick.querySelector('span').innerHTML = `<img src="${data}" alt="">`;
+      pick.querySelector('span').innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`;
     });
-    return () => data;
+    return async () => (input.files[0] ? S.savePhoto(input.files[0]) : '');
   };
   const photoPickHtml = `<label class="photo-pick"><span>＋ фото (необязательно)</span><input type="file" accept="image/*"></label>`;
 
   // ---------- Экран 1: приветствие ----------
   function viewWelcome() {
-    const user = S.getUser();
+    const user = S.me();
     let counter = '';
     if (C.startDate) {
       // Дата может быть и впереди — тогда считаем не «сколько уже», а «сколько осталось»
@@ -78,14 +67,30 @@
       const days = `<b>${d}</b>${plural(d, 'день', 'дня', 'дней')}`;
       counter = `<div class="counter">${n >= 0 ? `мы вместе уже${days}` : `наш день через${days}`}</div>`;
     }
-    const who = user
-      ? `<a class="btn" href="#/menu">Войти →</a>
-         <button class="linkish" data-reset>это не ${esc(nameOf(user))}?</button>`
-      : `<p class="muted" style="margin-top:8px">Кто сейчас здесь?</p>
-         <div class="who">
-           <button class="btn" data-who="she">${esc(C.names.she)}</button>
-           <button class="btn btn--ghost" data-who="he">${esc(C.names.he)}</button>
-         </div>`;
+    let who;
+    if (S.cloud) {
+      // В облаке «кто я» определяет вход, а не кнопка: записи общие и подписаны автором.
+      who = user
+        ? `<a class="btn" href="#/menu">Войти →</a>
+           <button class="linkish" data-signout>выйти</button>`
+        : S.signedIn()
+          ? `<p class="muted">Ты вошла, но тебя ещё не добавили в список своих.<br>
+             Осталось выполнить последний шаг из <code>supabase/schema.sql</code>.</p>
+             <button class="linkish" data-signout>выйти</button>`
+          : `<form class="form login">
+               <label class="field">Почта<input name="email" type="email" required placeholder="чтобы прислать ссылку для входа"></label>
+               <button class="btn">Прислать ссылку</button>
+             </form>`;
+    } else {
+      who = user
+        ? `<a class="btn" href="#/menu">Войти →</a>
+           <button class="linkish" data-reset>это не ${esc(nameOf(user))}?</button>`
+        : `<p class="muted" style="margin-top:8px">Кто сейчас здесь?</p>
+           <div class="who">
+             <button class="btn" data-who="she">${esc(C.names.she)}</button>
+             <button class="btn btn--ghost" data-who="he">${esc(C.names.he)}</button>
+           </div>`;
+    }
 
     app.innerHTML = `
       <section class="welcome">
@@ -98,12 +103,28 @@
       </section>`;
 
     app.querySelectorAll('[data-who]').forEach((b) => b.addEventListener('click', () => {
-      S.setUser(b.dataset.who);
+      S.setMe(b.dataset.who);
       location.hash = '#/menu';
     }));
     app.querySelector('[data-reset]')?.addEventListener('click', () => {
-      try { localStorage.removeItem('mylove:user'); } catch {}
+      S.signOut();
       viewWelcome();
+    });
+    app.querySelector('[data-signout]')?.addEventListener('click', async () => {
+      await S.signOut();
+      viewWelcome();
+    });
+    app.querySelector('.login')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('.btn');
+      btn.disabled = true; btn.textContent = 'Отправляю…';
+      try {
+        await S.signIn(e.target.email.value.trim());
+        e.target.outerHTML = '<p class="muted">Письмо ушло. Открой его на этом же устройстве и нажми ссылку.</p>';
+      } catch (err) {
+        btn.disabled = false; btn.textContent = 'Прислать ссылку';
+        alert('Не получилось отправить письмо: ' + err.message);
+      }
     });
   }
 
@@ -154,7 +175,7 @@
       </div>
       ${shown.length ? `<div class="wishes">${shown.map((w) => `
         <article class="card wish ${w.done ? 'is-done' : ''}">
-          ${w.photo ? `<img src="${w.photo}" alt="">` : ''}
+          ${w.photo ? `<img data-photo="${esc(w.photo)}" alt="">` : ''}
           <div class="card__body">
             <p class="wish__text">${esc(w.text)}</p>
             ${w.link ? `<a class="wish__link" href="${esc(w.link)}" target="_blank" rel="noopener">${esc(w.link.replace(/^https?:\/\//, '').slice(0, 40))}</a>` : ''}
@@ -169,6 +190,7 @@
         </article>`).join('')}</div>`
         : empty(wishFilter === 'done' ? 'Пока ничего не исполнено, но это ненадолго.' : 'Здесь пока пусто. Напиши первое желание.')}`;
 
+    showPhotos(app);
     app.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => { wishFilter = b.dataset.filter; viewWishes(); }));
     app.querySelector('[data-add]').addEventListener('click', addWish);
     app.querySelectorAll('[data-done]').forEach((b) => b.addEventListener('click', async () => {
@@ -195,7 +217,7 @@
       root.querySelector('form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = e.target;
-        await S.add('wishes', { text: f.text.value.trim(), link: f.link.value.trim(), photo: getPhoto(), author: S.getUser(), done: false });
+        await S.add('wishes', { text: f.text.value.trim(), link: f.link.value.trim(), photo: await getPhoto(), author: S.me(), done: false });
         closeModal();
         viewWishes();
       });
@@ -270,7 +292,7 @@
       root.querySelector('form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = e.target;
-        await S.add('goals', { title: f.title.value.trim(), desc: f.desc.value.trim(), due: f.due.value, author: S.getUser(), done: false });
+        await S.add('goals', { title: f.title.value.trim(), desc: f.desc.value.trim(), due: f.due.value, author: S.me(), done: false });
         closeModal();
         viewGoals();
       });
@@ -387,7 +409,7 @@
       root.querySelector('form').addEventListener('submit', async (e) => {
         e.preventDefault();
         const f = e.target;
-        await S.add('dates', { day, title: f.title.value.trim(), time: f.time.value, place: f.place.value.trim(), note: f.note.value.trim(), author: S.getUser() });
+        await S.add('dates', { day, title: f.title.value.trim(), time: f.time.value, place: f.place.value.trim(), note: f.note.value.trim(), author: S.me() });
         closeModal();
         viewCalendar();
       });
@@ -423,7 +445,7 @@
     closeModal();
     const key = location.hash.replace(/^#\/?/, '');
     // Без выбранного «кто я» пускаем только на приветствие
-    const view = !S.getUser() ? viewWelcome : routes[key] || viewMenu;
+    const view = !S.me() ? viewWelcome : routes[key] || viewMenu;
     document.body.classList.toggle('is-welcome', view === viewWelcome);
     app.style.animation = 'none';
     void app.offsetWidth; // перезапуск анимации появления
@@ -433,5 +455,14 @@
   }
 
   window.addEventListener('hashchange', render);
-  render();
+
+  // Хранилищу нужно время: в облаке оно подтягивает библиотеку и восстанавливает вход.
+  app.innerHTML = '<section class="welcome"><img class="welcome__sticker" src="assets/flowers/hello.webp" alt=""></section>';
+  S.init()
+    .then(render)
+    .catch((e) => {
+      app.innerHTML = `<section class="welcome"><h1>Не открылось</h1>
+        <p class="muted">Не удалось связаться с хранилищем. Попробуй обновить страницу.</p>
+        <p class="muted"><small>${esc(e.message)}</small></p></section>`;
+    });
 })();
