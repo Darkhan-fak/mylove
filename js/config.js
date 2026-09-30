@@ -12,5 +12,5 @@ window.CONFIG = {
 
   // Картинки для боковых панелей: положи файлы в assets/flowers/ и впиши пути.
   // Пустая строка означает нарисованную веточку по умолчанию.
-  sides: { left: '', right: '' },
+  sides: { left: 'assets/flowers/left.webp', right: 'assets/flowers/right.webp' },
 };

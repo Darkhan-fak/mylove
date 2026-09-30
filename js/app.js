@@ -382,7 +382,7 @@
     const src = C.sides?.[side];
     if (!src) return;
     const el = document.querySelector(`.side--${side}`);
-    el.style.setProperty('--side-img', `url('${src}')`);
+    el.style.backgroundImage = `url('${src}')`;
     el.classList.add('custom');
   });
 

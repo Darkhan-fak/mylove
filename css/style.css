@@ -40,7 +40,9 @@ a { color: inherit; }
 }
 .side--left { left: 0; }
 .side--right { right: 0; transform: scaleX(-1); }
-.side.custom { transform: none; background-size: cover; }
+.side.custom { transform: none; opacity: 1; background-size: cover; }
+.side--left.custom { background-position: left top; -webkit-mask-image: linear-gradient(to right, #000 75%, transparent); mask-image: linear-gradient(to right, #000 75%, transparent); }
+.side--right.custom { background-position: right top; -webkit-mask-image: linear-gradient(to left, #000 75%, transparent); mask-image: linear-gradient(to left, #000 75%, transparent); }
 @media (max-width: 900px) { .side { display: none; } }
 
 /* ---------- Каркас ---------- */
