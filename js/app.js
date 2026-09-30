@@ -69,6 +69,8 @@
     }
     let who;
     if (S.cloud) {
+      const problem = S.authError();
+      if (problem) setTimeout(() => alert(problem), 50);
       // В облаке «кто я» определяет вход, а не кнопка: записи общие и подписаны автором.
       who = user
         ? `<a class="btn" href="#/menu">Войти →</a>
