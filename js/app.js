@@ -69,8 +69,6 @@
     }
     let who;
     if (S.cloud) {
-      const problem = S.authError();
-      if (problem) setTimeout(() => alert(problem), 50);
       // В облаке «кто я» определяет вход, а не кнопка: записи общие и подписаны автором.
       who = user
         ? `<a class="btn" href="#/menu">Войти →</a>
@@ -80,8 +78,9 @@
              Осталось выполнить последний шаг из <code>supabase/schema.sql</code>.</p>
              <button class="linkish" data-signout>выйти</button>`
           : `<form class="form login">
-               <label class="field">Почта<input name="email" type="email" required placeholder="чтобы прислать ссылку для входа"></label>
-               <button class="btn">Прислать ссылку</button>
+               <label class="field">Почта<input name="email" type="email" autocomplete="username" required></label>
+               <label class="field">Пароль<input name="password" type="password" autocomplete="current-password" required></label>
+               <button class="btn">Войти</button>
              </form>`;
     } else {
       who = user
@@ -119,13 +118,14 @@
     app.querySelector('.login')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector('.btn');
-      btn.disabled = true; btn.textContent = 'Отправляю…';
+      btn.disabled = true; btn.textContent = 'Захожу…';
       try {
-        await S.signIn(e.target.email.value.trim());
-        e.target.outerHTML = '<p class="muted">Письмо ушло. Открой его на этом же устройстве и нажми ссылку.</p>';
+        await S.signIn(e.target.email.value.trim(), e.target.password.value);
+        location.hash = '#/menu';
+        render();
       } catch (err) {
-        btn.disabled = false; btn.textContent = 'Прислать ссылку';
-        alert('Не получилось отправить письмо: ' + err.message);
+        btn.disabled = false; btn.textContent = 'Войти';
+        alert(err.message);
       }
     });
   }

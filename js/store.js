@@ -107,40 +107,22 @@ window.Store = (() => {
       async init() {
         await load('js/vendor/supabase.js');   // библиотека лежит рядом, без обращения к чужому CDN
         sb = window.supabase.createClient(CFG.url, CFG.anonKey);
-        let { data } = await sb.auth.getSession();
+        const { data } = await sb.auth.getSession();
         userId = data.session?.user?.id || null;
-        // Ссылка из письма приносит вход прямо в адресной строке, и разбирает её
-        // библиотека не мгновенно — иначе мы бы показали форму входа уже вошедшему.
-        if (!userId && /access_token|[?&]code=/.test(location.hash + location.search)) {
-          userId = await new Promise((done) => {
-            const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
-              if (!session) return;
-              sub.subscription.unsubscribe();
-              done(session.user.id);
-            });
-            setTimeout(() => { sub.subscription.unsubscribe(); done(null); }, 8000);
-          });
-        }
         if (userId) await readMembers();
       },
       me: () => who,
       signedIn: () => Boolean(userId),
-      // Если ссылка не сработала, Supabase возвращает причину в адресной строке
-      authError() {
-        const p = new URLSearchParams(location.hash.slice(1));
-        if (!p.get('error')) return '';
-        history.replaceState(null, '', location.pathname + location.search);
-        return p.get('error_code') === 'otp_expired'
-          ? 'Ссылка из письма уже использована или устарела. Запроси новую.'
-          : p.get('error_description') || p.get('error');
-      },
       setMe() {},                                // в облаке это решает вход, а не кнопка
-      async signIn(email) {
-        const { error } = await sb.auth.signInWithOtp({
-          email,
-          options: { emailRedirectTo: location.href.split('#')[0] },
-        });
-        if (error) throw error;
+      async signIn(email, password) {
+        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+        if (error) {
+          throw new Error(/invalid login/i.test(error.message)
+            ? 'Не подходит почта или пароль.'
+            : error.message);
+        }
+        userId = data.user.id;
+        await readMembers();
       },
       async signOut() {
         await sb.auth.signOut();

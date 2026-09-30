@@ -99,7 +99,7 @@ create policy photos_delete on storage.objects for delete
   using (bucket_id = 'photos' and public.is_member());
 
 -- ---------- Последний шаг ----------
--- Выполнить ПОСЛЕ того, как оба хотя бы раз вошли на сайт по ссылке из письма.
+-- Выполнить ПОСЛЕ того, как оба хотя бы раз вошли на сайт со своей почтой и паролем.
 -- Подставь настоящие адреса почты и запусти:
 --
 --   insert into public.members (user_id, who)

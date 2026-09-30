@@ -26,12 +26,12 @@ Settings репозитория → Pages → Source: *Deploy from a branch* →
 
 1. В Supabase: **SQL Editor** → вставить `supabase/schema.sql` → **Run**.
    Он создаёт таблицы, закрытое хранилище для фото и правила доступа.
-2. В **Authentication → URL Configuration** указать, куда ведёт ссылка из письма:
-   - *Site URL*: `https://darkhan-fak.github.io/mylove/`
-   - *Redirect URLs*: добавить `https://darkhan-fak.github.io/mylove/**`
-   Без этого письмо уводит на `localhost:3000` — значение по умолчанию.
-3. В **Authentication → Sign In / Providers** снять галку *Allow new users to sign up*.
-4. Обоим зайти на сайт и войти по ссылке из письма.
+2. В **Authentication → Users** нажать *Add user* и завести две учётки — почта и
+   пароль, с галкой *Auto Confirm User*. Вход по паролю, писем сайт не шлёт:
+   встроенная почта Supabase на бесплатном тарифе отдаёт пару писем в час.
+3. В **Authentication → Sign In / Providers** снять галку *Allow new users to sign up*,
+   чтобы посторонний не завёл себе учётку.
+4. Обоим зайти на сайт со своей почтой и паролем.
 5. Выполнить последний запрос из `supabase/schema.sql` — он добавляет обоих
    в таблицу `members`. Без этого записи не видны никому.
 
