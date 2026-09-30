@@ -139,7 +139,8 @@ const URL = 'file:///home/user/mylove/index.html';
     await p.click('[data-who="he"]'); await p.waitForTimeout(300);
     await p.goto(URL + '#/wishes'); await p.waitForTimeout(300);
     await p.click('[data-add]'); await p.fill('textarea[name=text]', 'Его желание'); await p.click('.form .btn:not(.btn--ghost)'); await p.waitForTimeout(300);
-    if (!(await p.textContent('.wish')).includes('Он')) log(`${tag}: желание подписано не тем автором`);
+    const heName = await p.evaluate(() => window.CONFIG.names.he);
+    if (!(await p.textContent('.wish')).includes(heName)) log(`${tag}: желание подписано не «${heName}»`);
 
     // 8. Неизвестный адрес
     await p.goto(URL + '#/чтототакое'); await p.waitForTimeout(400);

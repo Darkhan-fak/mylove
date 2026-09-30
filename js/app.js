@@ -72,12 +72,15 @@
     const user = S.getUser();
     let counter = '';
     if (C.startDate) {
+      // Дата может быть и впереди — тогда считаем не «сколько уже», а «сколько осталось»
       const n = daysBetween(parseYmd(C.startDate), today());
-      counter = `<div class="counter">мы вместе уже<b>${n}</b>${plural(n, 'день', 'дня', 'дней')}</div>`;
+      const d = Math.abs(n);
+      const days = `<b>${d}</b>${plural(d, 'день', 'дня', 'дней')}`;
+      counter = `<div class="counter">${n >= 0 ? `мы вместе уже${days}` : `наш день через${days}`}</div>`;
     }
     const who = user
       ? `<a class="btn" href="#/menu">Войти →</a>
-         <button class="linkish" data-reset>это не ${esc(nameOf(user).toLowerCase())}?</button>`
+         <button class="linkish" data-reset>это не ${esc(nameOf(user))}?</button>`
       : `<p class="muted" style="margin-top:8px">Кто сейчас здесь?</p>
          <div class="who">
            <button class="btn" data-who="she">${esc(C.names.she)}</button>
