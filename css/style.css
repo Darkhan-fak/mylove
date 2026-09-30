@@ -297,7 +297,7 @@ body:not(.is-welcome) .garden__note { display: none; }
 .day-list { display: grid; gap: 8px; margin-bottom: 20px; }
 
 /* ---------- Невысокие экраны: клумба ниже, чтобы кнопки не тонули в цветах ---------- */
-@media (max-height: 820px) {
+@media (max-height: 880px) {
   :root { --garden-h: clamp(100px, 15vh, 140px); --garden-h-inner: clamp(90px, 13vh, 130px); }
   .welcome {
     padding-bottom: calc(var(--garden-h) + 12px);
@@ -306,6 +306,9 @@ body:not(.is-welcome) .garden__note { display: none; }
   .welcome__sticker { width: 130px; }
 }
 
-/* ---------- Вход по ссылке на почту ---------- */
-.login { width: min(320px, 100%); margin-top: 8px; }
-.login .btn { justify-self: center; }
+/* ---------- Вход по дате рождения ---------- */
+.login { width: min(280px, 100%); margin-top: 4px; justify-items: center; }
+.login[hidden] { display: none; }
+.login__hint { margin: 0; font-size: 14px; color: var(--ink-soft); }
+.login .field { width: 100%; }
+.login input { text-align: center; }

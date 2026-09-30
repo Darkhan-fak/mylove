@@ -114,11 +114,14 @@ window.Store = (() => {
       me: () => who,
       signedIn: () => Boolean(userId),
       setMe() {},                                // в облаке это решает вход, а не кнопка
-      async signIn(email, password) {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      // who — кто входит ('he' или 'she'); birthday — день рождения ДРУГОГО, вида 2002-07-03
+      async signIn(who, birthday) {
+        const email = (window.CONFIG.login || {})[who];
+        if (!email) throw new Error('В настройках не указана учётная запись для входа.');
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: birthday });
         if (error) {
           throw new Error(/invalid login/i.test(error.message)
-            ? 'Не подходит почта или пароль.'
+            ? 'Дата не подошла. Проверь день, месяц и год.'
             : error.message);
         }
         userId = data.user.id;

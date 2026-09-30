@@ -24,22 +24,28 @@ const { start } = require('./serve');
   if (!state.cloud) problems.push('облачный режим не включился — проверь url и anonKey в config.js');
   if (!state.lib) problems.push('не загрузилась библиотека js/vendor/supabase.js');
   if (state.signedIn) problems.push('кто-то уже вошёл, хотя сессии быть не должно');
-  if (!(await p.locator('.login input[name=email]').count())) problems.push('нет поля для почты');
-  if (!(await p.locator('.login input[name=password]').count())) problems.push('нет поля для пароля');
+  if ((await p.locator('[data-pick]').count()) !== 2) problems.push('нет выбора, кто пришёл');
+  if (!(await p.locator('.login[hidden]').count())) problems.push('поле даты показано до выбора');
 
-  // Неверный вход должен приводить к сообщению, а не к молчанию. Каким именно оно будет,
+  await p.click('[data-pick="he"]');
+  await p.waitForTimeout(300);
+  const hint = (await p.textContent('.login__hint')).trim();
+  if (!hint.includes('Аида')) problems.push('подсказка спрашивает не про вторую половинку: «' + hint + '»');
+  else console.log('  подсказка: «' + hint + '»');
+  if (!(await p.locator('.login input[name=birthday]').count())) problems.push('нет поля для даты');
+
+  // Неверная дата должна приводить к сообщению, а не к молчанию. Каким именно оно будет,
   // зависит от среды: без доступа к Supabase это будет жалоба на сеть, с доступом —
-  // «Не подходит почта или пароль».
+  // «Дата не подошла».
   let said = '';
   p.on('dialog', async (d) => { said = d.message(); await d.accept(); });
-  await p.fill('.login input[name=email]', 'net-takogo@example.com');
-  await p.fill('.login input[name=password]', 'zavedomo-nevernyj');
+  await p.fill('.login input[name=birthday]', '1999-09-09');
   await p.click('.login .btn');
   await p.waitForTimeout(6000);
-  if (!said) problems.push('при неверном пароле сайт ничего не сказал');
-  else console.log('  при неверном пароле: «' + said + '»');
+  if (!said) problems.push('при неверной дате сайт ничего не сказал');
+  else console.log('  при неверной дате: «' + said + '»');
 
-  console.log(problems.length ? problems.map((m) => '  ⚠ ' + m).join('\n') : '  режим облака, вход по паролю — всё на месте');
+  console.log(problems.length ? problems.map((m) => '  ⚠ ' + m).join('\n') : '  режим облака, вход по дате рождения — всё на месте');
   await browser.close();
   site.stop();
   process.exitCode = problems.length ? 1 : 0;

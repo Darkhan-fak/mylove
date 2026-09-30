@@ -77,9 +77,14 @@
           ? `<p class="muted">Ты вошла, но тебя ещё не добавили в список своих.<br>
              Осталось выполнить последний шаг из <code>supabase/schema.sql</code>.</p>
              <button class="linkish" data-signout>выйти</button>`
-          : `<form class="form login">
-               <label class="field">Почта<input name="email" type="email" autocomplete="username" required></label>
-               <label class="field">Пароль<input name="password" type="password" autocomplete="current-password" required></label>
+          : `<p class="muted" style="margin-top:8px">Кто сейчас здесь?</p>
+             <div class="who">
+               <button class="btn btn--ghost" data-pick="she">${esc(C.names.she)}</button>
+               <button class="btn btn--ghost" data-pick="he">${esc(C.names.he)}</button>
+             </div>
+             <form class="form login" hidden>
+               <p class="login__hint"></p>
+               <label class="field"><input name="birthday" type="date" required></label>
                <button class="btn">Войти</button>
              </form>`;
     } else {
@@ -115,12 +120,24 @@
       await S.signOut();
       viewWelcome();
     });
-    app.querySelector('.login')?.addEventListener('submit', async (e) => {
+    // Выбрали, кто пришёл — спрашиваем день рождения второго.
+    let pick = null;
+    const form = app.querySelector('.login');
+    app.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => {
+      pick = b.dataset.pick;
+      app.querySelectorAll('[data-pick]').forEach((x) => x.classList.toggle('btn--ghost', x !== b));
+      const other = pick === 'he' ? 'she' : 'he';
+      form.querySelector('.login__hint').textContent =
+        `Когда ${other === 'she' ? 'родилась' : 'родился'} ${nameOf(other)}?`;
+      form.hidden = false;
+      form.birthday.focus();
+    }));
+    form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector('.btn');
       btn.disabled = true; btn.textContent = 'Захожу…';
       try {
-        await S.signIn(e.target.email.value.trim(), e.target.password.value);
+        await S.signIn(pick, e.target.birthday.value);
         location.hash = '#/menu';
         render();
       } catch (err) {
