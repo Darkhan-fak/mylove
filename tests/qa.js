@@ -81,7 +81,7 @@ const URL = 'file:///home/user/mylove/index.html';
     await p.click('[data-del]'); await p.waitForTimeout(300);
     if (await p.locator('.wish').count() !== 0) log(`${tag}: желание не удалилось`);
     await overflow(p, tag + '/хотелки');
-    await p.screenshot({ path: `qa-${tag}-wishes.png`, fullPage: true });
+    await p.screenshot({ path: require('path').join(__dirname, `screens/qa-${tag}-wishes.png`), fullPage: true });
 
     // 4. Цели
     await p.goto(URL + '#/goals'); await p.waitForTimeout(300);
@@ -97,7 +97,7 @@ const URL = 'file:///home/user/mylove/index.html';
     if (!(await p.locator('.goal.is-done').count())) log(`${tag}: цель не отмечается достигнутой`);
     if (!(await p.textContent('.progress')).includes('1 из 3')) log(`${tag}: прогресс целей считается неверно`);
     await overflow(p, tag + '/цели');
-    await p.screenshot({ path: `qa-${tag}-goals.png`, fullPage: true });
+    await p.screenshot({ path: require('path').join(__dirname, `screens/qa-${tag}-goals.png`), fullPage: true });
 
     // 5. Календарь
     await p.goto(URL + '#/calendar'); await p.waitForTimeout(400);
@@ -119,7 +119,7 @@ const URL = 'file:///home/user/mylove/index.html';
     if (!(await p.locator('.modal .date').count())) log(`${tag}: свидание не видно в окне дня`);
     await p.click('.modal__x'); await p.waitForTimeout(200);
     await overflow(p, tag + '/календарь');
-    await p.screenshot({ path: `qa-${tag}-calendar.png`, fullPage: true });
+    await p.screenshot({ path: require('path').join(__dirname, `screens/qa-${tag}-calendar.png`), fullPage: true });
 
     // 6. Перезагрузка: данные на месте
     await p.reload(); await p.waitForTimeout(600);
