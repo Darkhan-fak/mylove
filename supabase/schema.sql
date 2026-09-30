@@ -99,12 +99,13 @@ create policy photos_delete on storage.objects for delete
   using (bucket_id = 'photos' and public.is_member());
 
 -- ---------- Последний шаг ----------
--- Выполнить ПОСЛЕ того, как оба хотя бы раз вошли на сайт со своей почтой и паролем.
--- Подставь настоящие адреса почты и запусти:
---
---   insert into public.members (user_id, who)
---   select id, case when email = 'почта-дархана@example.com' then 'he' else 'she' end
---   from auth.users
---   on conflict (user_id) do update set who = excluded.who;
---
--- Проверить, что получилось:  select * from public.members;
+-- Выполнить ПОСЛЕ того, как обе учётные записи заведены в Authentication → Users.
+-- Почта берётся из блока login в js/config.js. Запустить целиком:
+
+insert into public.members (user_id, who)
+select id, case when email = 'darkhan@mylove.site' then 'he' else 'she' end
+from auth.users
+on conflict (user_id) do update set who = excluded.who;
+
+-- Проверить, что получилось — должно быть две строки, he и she:
+select m.who, u.email from public.members m join auth.users u on u.id = m.user_id;
