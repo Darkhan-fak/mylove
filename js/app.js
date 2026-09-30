@@ -377,6 +377,9 @@
     });
   }
 
+  // Подпись на фото клумбы
+  document.querySelector('.garden__note').textContent = C.gardenNote || '';
+
   // ---------- Наклейки по бокам ----------
   // Каждая наклейка — отдельная картинка со своим покачиванием; скорость и фаза разные,
   // чтобы они не двигались синхронно.
@@ -403,6 +406,7 @@
     const key = location.hash.replace(/^#\/?/, '');
     // Без выбранного «кто я» пускаем только на приветствие
     const view = !S.getUser() ? viewWelcome : routes[key] || viewMenu;
+    document.body.classList.toggle('is-welcome', view === viewWelcome);
     app.style.animation = 'none';
     void app.offsetWidth; // перезапуск анимации появления
     app.style.animation = '';
