@@ -13,6 +13,8 @@
   --radius: 18px;
   --shadow: 0 1px 2px rgba(74, 52, 56, .04), 0 8px 24px rgba(74, 52, 56, .06);
   --side-w: clamp(0px, calc((100vw - 760px) / 2), 280px);
+  --garden-h: clamp(150px, 26vh, 260px);        /* приветствие */
+  --garden-h-inner: clamp(110px, 17vh, 170px);  /* экраны со списками */
   --serif: 'Cormorant Garamond', Georgia, serif;
   --sans: 'Manrope', system-ui, -apple-system, sans-serif;
 }
@@ -20,6 +22,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
+  position: relative;      /* точка отсчёта для клумбы в конце страницы */
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
@@ -80,7 +83,7 @@ body:not(.is-welcome) .side--right .sticker { right: -8%; }
   z-index: 2;
   max-width: 760px;
   margin: 0 auto;
-  padding: 32px 20px 80px;
+  padding: 32px 20px calc(var(--garden-h-inner) + 48px);
   min-height: 100vh;
   animation: fade .5s ease both;
 }
@@ -119,7 +122,7 @@ h2 { font-size: 36px; }
 /* ---------- Экран 1: приветствие ---------- */
 .welcome {
   min-height: calc(100vh - 112px);
-  padding-bottom: calc(clamp(150px, 26vh, 260px) + 16px);
+  padding-bottom: calc(var(--garden-h) + 16px);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   text-align: center; gap: 20px;
 }
@@ -135,17 +138,25 @@ h2 { font-size: 36px; }
 .who { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
 .linkish { background: none; border: 0; color: var(--ink-soft); text-decoration: underline; cursor: pointer; font-size: 13px; }
 
-/* ---------- Цветочная клумба внизу приветствия ---------- */
+/* ---------- Цветочная клумба внизу экрана ---------- */
 .garden {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 0;
-  height: clamp(150px, 26vh, 260px);
+  height: var(--garden-h);
   background: url('../assets/photos/garden-band.webp') no-repeat center 40% / cover;
-  opacity: 0; transition: opacity .6s ease;
+  transition: height .4s ease;
   -webkit-mask-image: linear-gradient(to bottom, transparent, #000 40%);
   mask-image: linear-gradient(to bottom, transparent, #000 40%);
   pointer-events: none;
 }
-body.is-welcome .garden { opacity: 1; }
+/* На экранах со списками клумба ниже и стоит в конце страницы, а не поверх неё:
+   иначе длинный список уезжал бы под цветы. На коротких страницах она всё равно
+   оказывается внизу экрана, потому что .app занимает не меньше высоты окна. */
+body:not(.is-welcome) .garden {
+  position: absolute;
+  height: var(--garden-h-inner);
+}
+/* Подпись к снимку уместна только там, где клумба — главный образ */
+body:not(.is-welcome) .garden__note { display: none; }
 .garden__note {
   position: absolute; right: calc(var(--side-w) + 22px); bottom: 14px;
   font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
@@ -287,9 +298,9 @@ body.is-welcome .garden { opacity: 1; }
 
 /* ---------- Невысокие экраны: клумба ниже, чтобы кнопки не тонули в цветах ---------- */
 @media (max-height: 820px) {
-  .garden { height: clamp(100px, 15vh, 140px); }
+  :root { --garden-h: clamp(100px, 15vh, 140px); --garden-h-inner: clamp(90px, 13vh, 130px); }
   .welcome {
-    padding-bottom: calc(clamp(100px, 15vh, 140px) + 12px);
+    padding-bottom: calc(var(--garden-h) + 12px);
     gap: 14px;
   }
   .welcome__sticker { width: 130px; }
