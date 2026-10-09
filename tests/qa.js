@@ -17,6 +17,18 @@ const { start, withoutCloud } = require('./serve');
     p.on('dialog', d => d.accept());
     return p;
   }
+  // Свидание попадает в «ближайшие» или в «уже было» — смотря какой сегодня день,
+  // поэтому считаем в обеих вкладках.
+  const datesEverywhere = async (p) => {
+    let n = 0;
+    for (const tab of ['upcoming', 'past']) {
+      await p.click(`[data-tab="${tab}"]`);
+      await p.waitForTimeout(250);
+      n += await p.locator('.dates .date').count();
+    }
+    return n;
+  };
+
   const overflow = async (p, tag) => {
     const w = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (w > 1) log(`${tag}: горизонтальная прокрутка, лишние ${w}px`);
@@ -50,7 +62,7 @@ const { start, withoutCloud } = require('./serve');
     const cards = await p.locator('.menu__item').count();
     if (cards !== 5) log(`${tag}: в меню ${cards} карточек вместо 5`);
     const soon = p.locator('.menu__item.is-soon');
-    if (await soon.count() !== 2) log(`${tag}: карточек «скоро» не 2`);
+    if (await soon.count() !== 1) log(`${tag}: карточек «скоро» не 1`);
     if (await soon.first().getAttribute('href') !== '#/menu') log(`${tag}: карточка «скоро» куда-то ведёт`);
     await overflow(p, tag + '/меню');
     for (const s of ['.menu__item:nth-child(3)', '.menu__item:nth-child(4)', '.menu__item:nth-child(5)']) {
@@ -116,8 +128,7 @@ const { start, withoutCloud } = require('./serve');
     await p.fill('input[name=title]', 'Ужин и кино'); await p.fill('input[name=time]', '19:30');
     await p.fill('input[name=place]', 'Центр'); await p.click('.form .btn:not(.btn--ghost)'); await p.waitForTimeout(400);
     if (!(await p.locator('.cal__day.has-date').count())) log(`${tag}: день со свиданием не отмечен`);
-    const past = (await p.textContent('[data-tab="past"]')).includes('1');
-    if (!past && !(await p.locator('.date').count())) log(`${tag}: свидание не попало ни в один список`);
+    if (!(await datesEverywhere(p))) log(`${tag}: свидание не попало ни в один список`);
     await p.click('.cal__day.has-date'); await p.waitForTimeout(300);
     if (!(await p.locator('.modal .date').count())) log(`${tag}: свидание не видно в окне дня`);
     await p.click('.modal__x'); await p.waitForTimeout(200);
@@ -126,9 +137,7 @@ const { start, withoutCloud } = require('./serve');
 
     // 6. Перезагрузка: данные на месте
     await p.reload(); await p.waitForTimeout(600);
-    await p.click('[data-tab="past"]'); await p.waitForTimeout(300);
-    const kept = await p.locator('.date').count() + (await p.evaluate(() => document.querySelectorAll('.date').length));
-    if (!kept) log(`${tag}: свидание пропало после перезагрузки`);
+    if (!(await datesEverywhere(p))) log(`${tag}: свидание пропало после перезагрузки`);
     await p.goto(URL + '#/goals'); await p.waitForTimeout(400);
     if (await p.locator('.goal').count() !== 3) log(`${tag}: цели пропали после перезагрузки`);
 
