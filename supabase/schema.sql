@@ -51,6 +51,15 @@ create table if not exists public.dates (
   note       text
 );
 
+create table if not exists public.photos (
+  id         uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  author     uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  path       text not null,                 -- снимок целиком
+  thumb      text not null,                 -- уменьшенная копия для сетки
+  caption    text
+);
+
 create index if not exists dates_day_idx on public.dates (day);
 
 -- ---------- Права ----------
@@ -58,6 +67,7 @@ alter table public.members enable row level security;
 alter table public.wishes  enable row level security;
 alter table public.goals   enable row level security;
 alter table public.dates   enable row level security;
+alter table public.photos  enable row level security;
 
 -- Свои видят друг друга: нужно, чтобы подписать запись именем автора.
 drop policy if exists members_read on public.members;
@@ -66,7 +76,7 @@ create policy members_read on public.members for select using (public.is_member(
 do $$
 declare t text;
 begin
-  foreach t in array array['wishes', 'goals', 'dates'] loop
+  foreach t in array array['wishes', 'goals', 'dates', 'photos'] loop
     execute format('drop policy if exists %1$s_read   on public.%1$s', t);
     execute format('drop policy if exists %1$s_insert on public.%1$s', t);
     execute format('drop policy if exists %1$s_update on public.%1$s', t);
@@ -87,15 +97,15 @@ insert into storage.buckets (id, name, public)
 values ('photos', 'photos', false)
 on conflict (id) do nothing;
 
-drop policy if exists photos_read   on storage.objects;
-drop policy if exists photos_insert on storage.objects;
-drop policy if exists photos_delete on storage.objects;
+drop policy if exists storage_photos_read   on storage.objects;
+drop policy if exists storage_photos_insert on storage.objects;
+drop policy if exists storage_photos_delete on storage.objects;
 
-create policy photos_read   on storage.objects for select
+create policy storage_photos_read   on storage.objects for select
   using (bucket_id = 'photos' and public.is_member());
-create policy photos_insert on storage.objects for insert
+create policy storage_photos_insert on storage.objects for insert
   with check (bucket_id = 'photos' and public.is_member());
-create policy photos_delete on storage.objects for delete
+create policy storage_photos_delete on storage.objects for delete
   using (bucket_id = 'photos' and public.is_member());
 
 -- ---------- Последний шаг ----------

@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
   <!-- ?v=... в адресах — чтобы браузер не показывал старую копию после обновления сайта.
        При правке css/js меняй метку: тогда браузер точно возьмёт новые файлы. -->
-  <link rel="stylesheet" href="css/style.css?v=20260930a">
+  <link rel="stylesheet" href="css/style.css?v=20261009a">
 </head>
 <body>
   <aside class="side side--left" aria-hidden="true"></aside>
@@ -27,8 +27,26 @@
     </div>
   </div>
 
-  <script src="js/config.js?v=20260930a"></script>
-  <script src="js/store.js?v=20260930a"></script>
-  <script src="js/app.js?v=20260930a"></script>
+  <div class="viewer" id="viewer" hidden>
+    <div class="viewer__backdrop" data-viewer-close></div>
+    <button class="viewer__x" type="button" data-viewer-close aria-label="Закрыть">×</button>
+    <button class="viewer__nav viewer__nav--prev" type="button" data-step="-1" aria-label="Предыдущее">‹</button>
+    <figure class="viewer__frame">
+      <img class="viewer__img" alt="">
+      <figcaption>
+        <p class="viewer__caption"></p>
+        <p class="viewer__meta"></p>
+        <div class="viewer__tools">
+          <button class="icon-btn" type="button" data-caption>Подписать</button>
+          <button class="icon-btn" type="button" data-remove>Удалить</button>
+        </div>
+      </figcaption>
+    </figure>
+    <button class="viewer__nav viewer__nav--next" type="button" data-step="1" aria-label="Следующее">›</button>
+  </div>
+
+  <script src="js/config.js?v=20261009a"></script>
+  <script src="js/store.js?v=20261009a"></script>
+  <script src="js/app.js?v=20261009a"></script>
 </body>
 </html>

@@ -150,7 +150,7 @@
   // ---------- Экран 2: меню ----------
   const SECTIONS = [
     { href: '#/story', title: 'Наша история', desc: 'Фото, слова и, может быть, видео о том, как всё началось', soon: true },
-    { href: '#/gallery', title: 'Галерея', desc: 'Все наши фото: смотреть случайные и добавлять новые', soon: true },
+    { href: '#/gallery', title: 'Галерея', desc: 'Все наши фото: смотреть случайные и добавлять новые' },
     { href: '#/wishes', title: 'Хотелки', desc: 'Маленькие и большие желания с фото' },
     { href: '#/goals', title: 'Наши цели', desc: 'Чего мы хотим и к какому сроку' },
     { href: '#/calendar', title: 'Календарь', desc: 'Наши свидания: прошедшие и будущие' },
@@ -457,8 +457,114 @@
     }).join('');
   });
 
+  // ---------- Экран: галерея ----------
+  let shots = [];          // то, что сейчас показано, в порядке сетки
+
+  async function viewGallery() {
+    shots = await S.list('photos');
+
+    app.innerHTML = `
+      ${topbar()}
+      <div class="page-head">
+        <div><h2>Галерея</h2><p class="muted">Наши фотографии. Можно добавить прямо с телефона.</p></div>
+        <div class="page-head__actions">
+          ${shots.length > 1 ? '<button class="btn btn--ghost" data-random>Случайное</button>' : ''}
+          <label class="btn">＋ Фото<input type="file" accept="image/*" multiple hidden data-upload></label>
+        </div>
+      </div>
+      <p class="upload-state muted" hidden></p>
+      ${shots.length
+        ? `<div class="grid">${shots.map((ph, i) => `
+            <button class="grid__cell" data-open="${i}">
+              <img data-photo="${esc(ph.thumb)}" alt="${esc(ph.caption || '')}" loading="lazy">
+            </button>`).join('')}</div>`
+        : empty('Пока ни одной фотографии. Добавь первую.')}`;
+
+    showPhotos(app);
+    app.querySelector('[data-upload]').addEventListener('change', (e) => addPhotos(e.target.files));
+    app.querySelector('[data-random]')?.addEventListener('click', () => openShot(Math.floor(Math.random() * shots.length)));
+    app.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openShot(Number(b.dataset.open))));
+  }
+
+  async function addPhotos(files) {
+    const list = [...files];
+    if (!list.length) return;
+    const note = app.querySelector('.upload-state');
+    note.hidden = false;
+    let done = 0;
+    for (const f of list) {
+      note.textContent = list.length > 1
+        ? `Загружаю ${done + 1} из ${list.length}…`
+        : 'Загружаю…';
+      try {
+        const set = await S.savePhotoSet(f);
+        await S.add('photos', set);
+        done++;
+      } catch (err) {
+        note.hidden = true;
+        alert('Не получилось загрузить: ' + err.message);
+        break;
+      }
+    }
+    viewGallery();
+  }
+
+  // ---------- Просмотр снимка на весь экран ----------
+  const viewer = document.getElementById('viewer');
+  let shown = -1;
+
+  async function openShot(i) {
+    if (i < 0 || i >= shots.length) return;
+    shown = i;
+    const ph = shots[i];
+    viewer.hidden = false;
+    document.body.classList.add('is-viewing');
+    viewer.querySelector('.viewer__img').src = '';
+    viewer.querySelector('.viewer__img').src = await S.photoUrl(ph.path);
+    viewer.querySelector('.viewer__caption').textContent = ph.caption || '';
+    viewer.querySelector('.viewer__meta').textContent =
+      `${nameOf(ph.author) || ''} · ${new Date(ph.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    viewer.querySelectorAll('[data-step]').forEach((b) => { b.hidden = shots.length < 2; });
+  }
+
+  function closeShot() {
+    viewer.hidden = true;
+    shown = -1;
+    document.body.classList.remove('is-viewing');
+  }
+
+  viewer.addEventListener('click', (e) => {
+    if (e.target.closest('[data-viewer-close]')) closeShot();
+  });
+  viewer.querySelectorAll('[data-step]').forEach((b) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    openShot((shown + Number(b.dataset.step) + shots.length) % shots.length);
+  }));
+  viewer.querySelector('[data-caption]').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const ph = shots[shown];
+    const text = prompt('Подпись к фотографии', ph.caption || '');
+    if (text === null) return;
+    await S.update('photos', ph.id, { caption: text.trim() });
+    ph.caption = text.trim();
+    viewer.querySelector('.viewer__caption').textContent = ph.caption;
+  });
+  viewer.querySelector('[data-remove]').addEventListener('click', async (e) => {
+    e.stopPropagation();
+    if (!confirm('Удалить эту фотографию?')) return;
+    await S.remove('photos', shots[shown].id);
+    closeShot();
+    viewGallery();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (viewer.hidden) return;
+    if (e.key === 'Escape') closeShot();
+    if (e.key === 'ArrowRight') openShot((shown + 1) % shots.length);
+    if (e.key === 'ArrowLeft') openShot((shown - 1 + shots.length) % shots.length);
+  });
+
   // ---------- Роутер ----------
-  const routes = { '': viewWelcome, menu: viewMenu, wishes: viewWishes, goals: viewGoals, calendar: viewCalendar };
+  const routes = { '': viewWelcome, menu: viewMenu, gallery: viewGallery, wishes: viewWishes, goals: viewGoals, calendar: viewCalendar };
 
   function render() {
     closeModal();

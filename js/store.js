@@ -5,7 +5,7 @@
 window.Store = (() => {
   const CFG = window.CONFIG.supabase || {};
   const CLOUD = Boolean(CFG.url && CFG.anonKey);
-  const COLS = { wishes: 'wishes', goals: 'goals', dates: 'dates' };
+  const COLS = { wishes: 'wishes', goals: 'goals', dates: 'dates', photos: 'photos' };
 
   // ---------- Общее: сжатие фотографии перед сохранением ----------
   const compress = (file, max = 1280) => new Promise((resolve, reject) => {
@@ -67,6 +67,13 @@ window.Store = (() => {
       },
 
       async savePhoto(file) { return blobToDataUrl(await compress(file)); },
+      // Для галереи: снимок и уменьшенная копия для сетки
+      async savePhotoSet(file) {
+        return {
+          path: await blobToDataUrl(await compress(file, 1600)),
+          thumb: await blobToDataUrl(await compress(file, 480)),
+        };
+      },
       async photoUrl(v) { return v; },          // уже готовая строка data:
     };
   })();
@@ -96,6 +103,14 @@ window.Store = (() => {
       return desc === undefined ? rest : { ...rest, descr: desc };
     };
 
+    const name = () => `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    async function upload(blob, path) {
+      const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
+      if (error) throw error;
+      return path;
+    }
+
     async function readMembers() {
       const { data } = await sb.from('members').select('user_id, who');
       members = Object.fromEntries((data || []).map((m) => [m.user_id, m.who]));
@@ -105,7 +120,7 @@ window.Store = (() => {
     return {
       cloud: true,
       async init() {
-        await load('js/vendor/supabase.js?v=20260930a');   // библиотека лежит рядом, без обращения к чужому CDN
+        await load('js/vendor/supabase.js?v=20261009a');   // библиотека лежит рядом, без обращения к чужому CDN
         sb = window.supabase.createClient(CFG.url, CFG.anonKey);
         const { data } = await sb.auth.getSession();
         userId = data.session?.user?.id || null;
@@ -152,11 +167,16 @@ window.Store = (() => {
       },
 
       async savePhoto(file) {
-        const blob = await compress(file);
-        const path = `${userId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
-        const { error } = await sb.storage.from('photos').upload(path, blob, { contentType: 'image/jpeg' });
-        if (error) throw error;
-        return path;
+        return upload(await compress(file), name() + '.jpg');
+      },
+      // Для галереи: снимок и уменьшенная копия, чтобы сетка открывалась быстро
+      async savePhotoSet(file) {
+        const base = name();
+        const [path, thumb] = await Promise.all([
+          compress(file, 1600).then((b) => upload(b, base + '.jpg')),
+          compress(file, 480).then((b) => upload(b, base + '-t.jpg')),
+        ]);
+        return { path, thumb };
       },
       async photoUrl(path) {
         if (!path) return '';
